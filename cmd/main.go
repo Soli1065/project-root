@@ -1,13 +1,27 @@
+// cmd/main.go
+
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"project-root/internal/api"
+
+	"github.com/gorilla/mux"
+	"github.com/your-module/internal/api_gateway"
 )
 
 func main() {
-	r := api.GatewayHandler()
-	log.Println("Server running on port 8080")
-	http.ListenAndServe(":8080", r)
+	// Initialize a new Gorilla mux router
+	router := api_gateway.NewRouter()
+
+	// Set up API routes
+	api_gateway.SetAPIRoutes(router)
+
+	// Run the HTTP server
+	addr := ":8080"
+	fmt.Printf("Server is running on %s\n", addr)
+	if err := api_gateway.RunServer(router, addr); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

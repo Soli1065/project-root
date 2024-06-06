@@ -1,29 +1,19 @@
-package api
+// internal/api_gateway/gateway.go
+
+package api_gateway
 
 import (
 	"net/http"
-	"project-root/internal/category"
-	"project-root/internal/content"
-	"project-root/internal/recommendation"
-	"project-root/internal/user"
 
 	"github.com/gorilla/mux"
 )
 
-func GatewayHandler() http.Handler {
-	r := mux.NewRouter()
+// NewRouter initializes and returns a new Gorilla mux router.
+func NewRouter() *mux.Router {
+	return mux.NewRouter()
+}
 
-	// User service routes
-	r.HandleFunc("/users/{id}", user.GetUserHandler).Methods("GET")
-
-	// Content service routes
-	r.HandleFunc("/content/{id}", content.GetContentHandler).Methods("GET")
-
-	// Category service routes
-	r.HandleFunc("/categories/{id}", category.GetCategoryHandler).Methods("GET")
-
-	// Recommendation service routes
-	r.HandleFunc("/recommendations/{userId}", recommendation.GetRecommendationHandler).Methods("GET")
-
-	return r
+// RunServer runs the HTTP server with the specified router and address.
+func RunServer(router *mux.Router, addr string) error {
+	return http.ListenAndServe(addr, router)
 }
