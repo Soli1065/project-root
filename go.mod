@@ -2,10 +2,7 @@ module project-root
 
 go 1.22.4
 
-require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/jinzhu/gorm v1.9.16
-)
+require github.com/dgrijalva/jwt-go v3.2.0+incompatible
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -16,9 +13,8 @@ require (
 )
 
 require (
-	github.com/gorilla/mux v1.8.1 // indirect
+	github.com/gorilla/mux v1.8.1
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.24.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.10

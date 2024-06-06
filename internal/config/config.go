@@ -1,21 +1,33 @@
 package config
 
-// Configuration struct holds the configuration for the application
-type Configuration struct {
-	DBHost     string `json:"db_host"`
-	DBPort     string `json:"db_port"`
-	DBUser     string `json:"db_user"`
-	DBPassword string `json:"db_password"`
-	DBName     string `json:"db_name"`
-}
+import (
+	"fmt"
+	"log"
 
-// NewConfiguration creates a new configuration instance with default values
-func NewConfiguration() *Configuration {
-	return &Configuration{
-		DBHost:     "localhost",
-		DBPort:     "5432",
-		DBUser:     "username",
-		DBPassword: "password",
-		DBName:     "database",
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+// Initialize initializes the database connection
+func Initialize() {
+	// Database connection details
+	dbHost := "localhost"
+	dbPort := "5432"
+	dbUser := "postgres"
+	dbPassword := "Soli@123456789"
+	dbName := "academydb"
+
+	// Create the Data Source Name (DSN)
+	dsn := "host=" + dbHost + " port=" + dbPort + " user=" + dbUser + " password=" + dbPassword + " dbname=" + dbName + " sslmode=disable"
+
+	fmt.Printf("This is dsn:  %v ", dsn)
+
+	// Initialize the database
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Could not connect to the database: %v", err)
 	}
 }

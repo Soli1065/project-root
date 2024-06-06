@@ -8,26 +8,23 @@ import (
 
 	"project-root/internal/api_gateway"
 
-	"project-root/internal/pkg/database"
+	"project-root/internal/config"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	// Initialize your database connection
-	// db := database.Initialize()
-	dsn := "your-postgres-dsn"
-	db, err := database.Initialize(dsn)
-	if err != nil {
-		// Handle the error
-		log.Fatal(err)
-	}
+	fmt.Printf("Server is starting... \n")
+
+	// Initialize the configuration and database connection
+	fmt.Printf("Initializing Database... \n")
+	config.Initialize()
 
 	// Create a new router
 	router := mux.NewRouter()
 
 	// Set up API routes and pass the database instance
-	api_gateway.SetAPIRoutes(router, db)
+	api_gateway.SetAPIRoutes(router, config.DB)
 
 	// // Initialize a new Gorilla mux router
 	// router := api_gateway.NewRouter()
