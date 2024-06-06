@@ -1,4 +1,4 @@
-dastanamon/
+project-root/
 ├── cmd/
 │   └── main.go
 ├── internal/
@@ -39,143 +39,161 @@ dastanamon/
 
 
 
-API Documentation
-Overview
+# API Documentation
+
+## Overview
 This document provides documentation for the APIs available in the Dastanamon application.
 
-Base URL
-arduino
-Copy code
-https://api.example.com
-Authentication
-Login
-bash
-Copy code
+### Base URL
+http://172.16.170.47:8080
+
+
+## Authentication
+
+### Login
 POST /auth/login
-Description: Endpoint to authenticate user login.
-Request:
-Body:
-json
-Copy code
-{
-  "username": "example",
-  "password": "password"
-}
-Response:
-Success:
-json
-Copy code
-{
-  "token": "JWT_TOKEN"
-}
-Error:
-json
-Copy code
-{
-  "error": "Invalid credentials"
-}
-Register
-arduino
-Copy code
+
+
+- **Description:** Endpoint to authenticate user login.
+- **Request:**
+  - Body:
+    ```json
+    {
+      "username": "example",
+      "password": "password"
+    }
+    ```
+- **Response:**
+  - Success:
+    ```json
+    {
+      "token": "JWT_TOKEN"
+    }
+    ```
+  - Error:
+    ```json
+    {
+      "error": "Invalid credentials"
+    }
+    ```
+
+### Register
 POST /auth/register
-Description: Endpoint to register a new user.
-Request:
-Body:
-json
-Copy code
-{
-  "username": "example",
-  "email": "example@example.com",
-  "password": "password"
-}
-Response:
-Success:
-json
-Copy code
-{
-  "message": "User registered successfully"
-}
-Error:
-json
-Copy code
-{
-  "error": "Username already exists"
-}
-User Management
-Get All Users
-bash
-Copy code
+
+
+- **Description:** Endpoint to register a new user.
+- **Request:**
+  - Body:
+    ```json
+    {
+      "username": "example",
+      "email": "example@example.com",
+      "password": "password"
+    }
+    ```
+- **Response:**
+  - Success:
+    ```json
+    {
+      "message": "User registered successfully"
+    }
+    ```
+  - Error:
+    ```json
+    {
+      "error": "Username already exists"
+    }
+    ```
+
+## User Management
+
+### Get All Users
 GET /users
-Description: Endpoint to retrieve all users.
-Get User by ID
-bash
-Copy code
+
+
+- **Description:** Endpoint to retrieve all users.
+
+### Get User by ID
 GET /users/{id}
-Description: Endpoint to retrieve a user by ID.
-Create User
-bash
-Copy code
+
+- **Description:** Endpoint to retrieve a user by ID.
+
+### Create User
 POST /users
-Description: Endpoint to create a new user.
-Update User
-bash
-Copy code
+
+
+- **Description:** Endpoint to create a new user.
+
+### Update User
 PUT /users/{id}
-Description: Endpoint to update a user by ID.
-Delete User
-bash
-Copy code
+
+
+- **Description:** Endpoint to update a user by ID.
+
+### Delete User
 DELETE /users/{id}
-Description: Endpoint to delete a user by ID.
-Content Management
-Get All Content
-bash
-Copy code
+
+
+- **Description:** Endpoint to delete a user by ID.
+
+## Content Management
+
+### Get All Content
 GET /content
-Description: Endpoint to retrieve all content.
-Get Content by ID
-bash
-Copy code
+
+
+- **Description:** Endpoint to retrieve all content.
+
+### Get Content by ID
 GET /content/{id}
-Description: Endpoint to retrieve content by ID.
-Create Content
-bash
-Copy code
+
+
+- **Description:** Endpoint to retrieve content by ID.
+
+### Create Content
 POST /content
-Description: Endpoint to create new content.
-Update Content
-bash
-Copy code
+
+
+- **Description:** Endpoint to create new content.
+
+### Update Content
 PUT /content/{id}
-Description: Endpoint to update content by ID.
-Delete Content
-bash
-Copy code
+
+
+- **Description:** Endpoint to update content by ID.
+
+### Delete Content
 DELETE /content/{id}
-Description: Endpoint to delete content by ID.
-Category Management
-Get All Categories
-bash
-Copy code
+
+
+- **Description:** Endpoint to delete content by ID.
+
+## Category Management
+
+### Get All Categories
 GET /categories
-Description: Endpoint to retrieve all categories.
-Get Category by ID
-bash
-Copy code
+
+
+- **Description:** Endpoint to retrieve all categories.
+
+### Get Category by ID
 GET /categories/{id}
-Description: Endpoint to retrieve a category by ID.
-Create Category
-bash
-Copy code
+
+
+- **Description:** Endpoint to retrieve a category by ID.
+
+### Create Category
 POST /categories
-Description: Endpoint to create a new category.
-Update Category
-bash
-Copy code
+
+
+- **Description:** Endpoint to create a new category.
+
+### Update Category
 PUT /categories/{id}
-Description: Endpoint to update a category by ID.
-Delete Category
-bash
-Copy code
+
+- **Description:** Endpoint to update a category by ID.
+
+### Delete Category
 DELETE /categories/{id}
-Description: Endpoint to delete a category by ID.
+
+- **Description:** Endpoint to delete a category by ID.
