@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"log"
 
+	"project-root/internal/category"
+	"project-root/internal/content"
+	"project-root/internal/recommendation"
+	"project-root/internal/user"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -30,4 +35,23 @@ func Initialize() {
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 	}
+
+	// Perform migrations for each service
+	if err := DB.AutoMigrate(&user.User{}); err != nil {
+		log.Fatalf("Failed to migrate user model: %v", err)
+	}
+
+	if err := DB.AutoMigrate(&content.Content{}); err != nil {
+		log.Fatalf("Failed to migrate content model: %v", err)
+	}
+
+	if err := DB.AutoMigrate(&category.CategoryModel{}); err != nil {
+		log.Fatalf("Failed to migrate category model: %v", err)
+	}
+
+	if err := DB.AutoMigrate(&recommendation.Recommendation{}); err != nil {
+		log.Fatalf("Failed to migrate recommendation model: %v", err)
+	}
+
+	log.Println("Database migration successful")
 }
