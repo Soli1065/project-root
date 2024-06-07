@@ -3,6 +3,7 @@ package content
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -132,8 +133,6 @@ func DeleteContentHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-
-
 type VideoUploadResponse struct {
 	ID       uint   `json:"id"`
 	VideoURL string `json:"video_url"`
@@ -205,7 +204,7 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 
 		// Store content record in database
 		videoURL := fmt.Sprintf("/hls/videos/%d/index.m3u8", time.Now().Unix())
-		content := content.ContentModel{
+		content := ContentModel{
 			Title:       title,
 			Description: description,
 			URL:         videoURL,
