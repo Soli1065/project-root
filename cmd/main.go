@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"project-root/internal/api_gateway"
 
@@ -22,6 +23,9 @@ func main() {
 
 	// Create a new router
 	router := mux.NewRouter()
+
+	// Serve static files for HLS
+	router.PathPrefix("/hls/").Handler(http.StripPrefix("/hls/", http.FileServer(http.Dir("./hls"))))
 
 	// Set up API routes and pass the database instance
 	api_gateway.SetAPIRoutes(router, config.DB)

@@ -8,6 +8,7 @@ import (
 	"project-root/internal/content"
 	"project-root/internal/recommendation"
 	"project-root/internal/user"
+	"project-root/internal/video"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -30,6 +31,7 @@ func SetAPIRoutes(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/content", content.GetAllContentHandler(db)).Methods("GET")
 	router.HandleFunc("/content/{id}", content.GetContentByIDHandler(db)).Methods("GET")
 	router.HandleFunc("/content", content.CreateContentHandler(db)).Methods("POST")
+	router.HandleFunc("/content/upload", content.UploadVideoHandler(db)).Methods("POST")
 	router.HandleFunc("/content/{id}", content.UpdateContentHandler(db)).Methods("PUT")
 	router.HandleFunc("/content/{id}", content.DeleteContentHandler(db)).Methods("DELETE")
 
@@ -46,4 +48,9 @@ func SetAPIRoutes(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/recommendations", recommendation.CreateRecommendationHandler(db)).Methods("POST")
 	router.HandleFunc("/recommendations/{id}", recommendation.UpdateRecommendationHandler(db)).Methods("PUT")
 	router.HandleFunc("/recommendations/{id}", recommendation.DeleteRecommendationHandler(db)).Methods("DELETE")
+
+	// Video routes
+	router.HandleFunc("/videos", video.CreateVideoHandler(db)).Methods("POST")
+	router.HandleFunc("/videos/{id}", video.GetVideoByIDHandler(db)).Methods("GET")
+
 }

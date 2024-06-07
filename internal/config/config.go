@@ -8,6 +8,7 @@ import (
 	"project-root/internal/content"
 	"project-root/internal/recommendation"
 	"project-root/internal/user"
+	"project-root/internal/video"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -27,7 +28,7 @@ func Initialize() {
 	// Create the Data Source Name (DSN)
 	dsn := "host=" + dbHost + " port=" + dbPort + " user=" + dbUser + " password=" + dbPassword + " dbname=" + dbName + " sslmode=disable"
 
-	fmt.Printf("This is dsn:  %v ", dsn)
+	fmt.Printf("This is dsn:  %v \n", dsn)
 
 	// Initialize the database
 	var err error
@@ -37,6 +38,10 @@ func Initialize() {
 	}
 
 	// Perform migrations for each service
+
+	// Migrate the schema
+	// DB.AutoMigrate(&user.User{}, &category.CategoryModel{}, &content.Content{}, &recommendation.Recommendation{}, &video.Video{})
+
 	if err := DB.AutoMigrate(&user.User{}); err != nil {
 		log.Fatalf("Failed to migrate user model: %v", err)
 	}
@@ -53,5 +58,9 @@ func Initialize() {
 		log.Fatalf("Failed to migrate recommendation model: %v", err)
 	}
 
-	log.Println("Database migration successful")
+	if err := DB.AutoMigrate(&video.Video{}); err != nil {
+		log.Fatalf("Failed to migrate video model: %v", err)
+	}
+
+	log.Println("Database migration successful ")
 }

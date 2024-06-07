@@ -8,6 +8,13 @@ import (
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
 )
 
 // GetAllContentsHandler handles the request to retrieve all contents
@@ -122,5 +129,84 @@ func DeleteContentHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+type VideoUploadResponse struct {
+	ID       uint   `json:"id"`
+	VideoURL string `json:"video_url"`
+}
+
+func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse form values
+		title := r.FormValue("title")
+		description := r.FormValue("description")
+		authorID, err := strconv.Atoi(r.FormValue("author_id"))
+		if err != nil {
+			http.Error(w, "Invalid author ID", http.StatusBadRequest)
+			return
+		}
+		authorName := r.FormValue("author_name")
+		categoryID, err := strconv.Atoi(r.FormValue("category_id"))
+		if err != nil {
+			http.Error(w, "Invalid category ID", http.StatusBadRequest)
+			return
+		}
+
+		// Handle file upload
+		file, handler, err := r.FormFile("video")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Save the uploaded video file temporarily
+		tempFilePath := fmt.Sprintf("/tmp/%d%s", time.Now().Unix(), filepath.Ext(handler.Filename))
+		tempFile, err := os.Create(tempFilePath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer tempFile.Close()
+		_, err = io.Copy(tempFile, file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Convert video to HLS format
+		hlsOutputPath := fmt.Sprintf("/var/www/html/hls/videos/%d", time.Now().Unix())
+		os.MkdirAll(hlsOutputPath, os.ModePerm)
+		ffmpegCmd := exec.Command("ffmpeg", "-i", tempFilePath, "-codec: copy", "-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", filepath.Join(hlsOutputPath, "index.m3u8"))
+		if err := ffmpegCmd.Run(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Store content record in database
+		videoURL := fmt.Sprintf("/hls/%d/index.m3u8", time.Now().Unix())
+		content := ContentModel{
+			Title:       title,
+			Description: description,
+			URL:         videoURL,
+			CategoryID:  uint(categoryID),
+			AuthorID:    uint(authorID),
+			AuthorName:  authorName,
+			CreatedAt:   time.Now(),
+		}
+		if err := db.Create(&content).Error; err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with the video URL
+		response := VideoUploadResponse{
+			ID:       content.ID,
+			VideoURL: videoURL,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 }
