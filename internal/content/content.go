@@ -2,16 +2,21 @@
 package content
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
 // Content represents a content item
 type Content struct {
-	ID          uint   `gorm:"primary_key" json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
-	CategoryID  uint   `json:"category_id"`
+	ID          uint      `gorm:"primary_key" json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	URL         string    `json:"url"`
+	CategoryID  uint      `json:"category_id"`
+	AuthorID    uint      `json:"author_id"`
+	AuthorName  string    `json:"author_name"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
 }
 
 // GetAllContents retrieves all contents from the database

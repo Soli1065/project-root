@@ -204,7 +204,7 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 
 		// Store content record in database
 		videoURL := fmt.Sprintf("/hls/videos/%d/index.m3u8", time.Now().Unix())
-		content := ContentModel{
+		content := Content{
 			Title:       title,
 			Description: description,
 			URL:         videoURL,
