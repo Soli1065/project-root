@@ -19,10 +19,16 @@ var DB *gorm.DB
 // Initialize initializes the database connection
 func Initialize() {
 	// Database connection details
+	// dbHost := "localhost"
+	// dbPort := "5432"
+	// dbUser := "postgres"
+	// dbPassword := "Soli@123456789"
+	// dbName := "academydb"
+
 	dbHost := "localhost"
 	dbPort := "5432"
-	dbUser := "postgres"
-	dbPassword := "Soli@123456789"
+	dbUser := "academydbuser"
+	dbPassword := "bpj12345"
 	dbName := "academydb"
 
 	// Create the Data Source Name (DSN)
