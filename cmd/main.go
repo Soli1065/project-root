@@ -19,6 +19,8 @@ func main() {
 
 	// Initialize the configuration and database connection
 	fmt.Printf("Initializing Database... \n")
+	fmt.Printf("this is new version... \n")
+
 	config.Initialize()
 
 	// Create a new router
