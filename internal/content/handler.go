@@ -132,6 +132,8 @@ func DeleteContentHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+
+
 type VideoUploadResponse struct {
 	ID       uint   `json:"id"`
 	VideoURL string `json:"video_url"`
@@ -139,6 +141,9 @@ type VideoUploadResponse struct {
 
 func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Set a maximum upload size of 100 MB
+		r.Body = http.MaxBytesReader(w, r.Body, 100<<20) // 100MB
+
 		// Parse form values
 		title := r.FormValue("title")
 		description := r.FormValue("description")
@@ -157,37 +162,50 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 		// Handle file upload
 		file, handler, err := r.FormFile("video")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Could not get uploaded file", http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
+
+		// Check file size
+		if handler.Size > 100<<20 { // 100MB
+			http.Error(w, "File size exceeds 100MB limit", http.StatusBadRequest)
+			return
+		}
 
 		// Save the uploaded video file temporarily
 		tempFilePath := fmt.Sprintf("/tmp/%d%s", time.Now().Unix(), filepath.Ext(handler.Filename))
 		tempFile, err := os.Create(tempFilePath)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Could not create temp file", http.StatusInternalServerError)
 			return
 		}
 		defer tempFile.Close()
 		_, err = io.Copy(tempFile, file)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Could not copy file to temp location", http.StatusInternalServerError)
 			return
 		}
 
 		// Convert video to HLS format
-		hlsOutputPath := fmt.Sprintf("/var/www/html/hls/videos/%d", time.Now().Unix())
-		os.MkdirAll(hlsOutputPath, os.ModePerm)
-		ffmpegCmd := exec.Command("ffmpeg", "-i", tempFilePath, "-codec: copy", "-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", filepath.Join(hlsOutputPath, "index.m3u8"))
-		if err := ffmpegCmd.Run(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		hlsOutputPath := fmt.Sprintf("/var/www/academyserverapp/hls/videos/%d", time.Now().Unix())
+		err = os.MkdirAll(hlsOutputPath, os.ModePerm)
+		if err != nil {
+			http.Error(w, "Could not create HLS output directory", http.StatusInternalServerError)
+			return
+		}
+
+		ffmpegCmd := exec.Command("ffmpeg", "-i", tempFilePath, "-codec:", "copy", "-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", filepath.Join(hlsOutputPath, "index.m3u8"))
+		ffmpegOutput, err := ffmpegCmd.CombinedOutput()
+		if err != nil {
+			log.Printf("FFmpeg command failed with error: %s\nOutput: %s", err, string(ffmpegOutput))
+			http.Error(w, "Could not process video", http.StatusInternalServerError)
 			return
 		}
 
 		// Store content record in database
-		videoURL := fmt.Sprintf("/hls/%d/index.m3u8", time.Now().Unix())
-		content := ContentModel{
+		videoURL := fmt.Sprintf("/hls/videos/%d/index.m3u8", time.Now().Unix())
+		content := content.ContentModel{
 			Title:       title,
 			Description: description,
 			URL:         videoURL,
@@ -197,7 +215,7 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			CreatedAt:   time.Now(),
 		}
 		if err := db.Create(&content).Error; err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Could not save content record", http.StatusInternalServerError)
 			return
 		}
 
