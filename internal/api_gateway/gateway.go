@@ -13,7 +13,7 @@ func NewRouter() *mux.Router {
 	return mux.NewRouter()
 }
 
-// RunServer runs the HTTP server with the specified router and address.
-func RunServer(router *mux.Router, addr string) error {
-	return http.ListenAndServe(addr, router)
+// RunServer runs the HTTP server with the specified handler and address.
+func RunServer(handler http.Handler, addr string) error {
+	return http.ListenAndServe(addr, handler)
 }
