@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -186,6 +187,43 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
+		// Handle image file upload
+		imageFile, imageHeader, err := r.FormFile("image")
+		var imageURL string
+		if err == nil {
+			defer imageFile.Close()
+
+			// Save the uploaded image file
+			imageFilePath := fmt.Sprintf("/var/www/academyserverapp/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
+			imageFileDest, err := os.Create(imageFilePath)
+			if err != nil {
+				http.Error(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer imageFileDest.Close()
+			_, err = io.Copy(imageFileDest, imageFile)
+			if err != nil {
+				http.Error(w, "Error saving the image file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			imageURL = imageFilePath
+		} else if err != http.ErrMissingFile {
+			http.Error(w, "Error retrieving the image file: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Get video duration using ffmpeg
+		output, err := exec.Command("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", tempFilePath).Output()
+		if err != nil {
+			http.Error(w, "Error getting video duration: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		duration, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+		if err != nil {
+			http.Error(w, "Error parsing video duration: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		// Convert video to HLS format
 		hlsOutputPath := fmt.Sprintf("/var/www/academyserverapp/hls/videos/%d", time.Now().Unix())
 		err = os.MkdirAll(hlsOutputPath, os.ModePerm)
@@ -212,6 +250,10 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			AuthorID:    uint(authorID),
 			AuthorName:  authorName,
 			CreatedAt:   time.Now(),
+			ImageURL:    imageURL,
+			Duration:    uint(duration),
+			IsLive:      false,
+			ViewCount:   0,
 		}
 		if err := db.Create(&content).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)
@@ -225,5 +267,29 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func IncrementViewCountHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		contentID, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			http.Error(w, "Invalid content ID", http.StatusBadRequest)
+			return
+		}
+
+		var content Content
+		if err := db.First(&content, contentID).Error; err != nil {
+			http.Error(w, "Content not found", http.StatusNotFound)
+			return
+		}
+
+		content.ViewCount++
+		if err := db.Save(&content).Error; err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }

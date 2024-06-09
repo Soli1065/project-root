@@ -17,6 +17,10 @@ type Content struct {
 	AuthorID    uint      `json:"author_id"`
 	AuthorName  string    `json:"author_name"`
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	ImageURL    string    `gorm:"type:varchar(255)" json:"image_url"`
+	ViewCount   uint      `gorm:"default:0" json:"view_count"`
+	Duration    uint      `gorm:"not null" json:"duration"`
+	IsLive      bool      `gorm:"default:false" json:"is_live"`
 }
 
 // GetAllContents retrieves all contents from the database
