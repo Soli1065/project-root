@@ -19,7 +19,7 @@ type Content struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	ImageURL    string    `gorm:"type:varchar(255)" json:"image_url"`
 	ViewCount   uint      `gorm:"default:0" json:"view_count"`
-	Duration    uint      `gorm:"not null" json:"duration"`
+	Duration    uint      `gorm:"default:0" json:"duration"`
 	IsLive      bool      `gorm:"default:false" json:"is_live"`
 }
 
