@@ -16,7 +16,7 @@ type ContentModel struct {
 	AuthorName  string    `json:"author_name"`
 	ImageURL    string    `json:"image_url"`
 	ViewCount   int       `json:"view_count"`
-	Duration    float64   `json:"duration"`
+	Duration    string    `json:"duration"`
 	IsLive      bool      `json:"is_live"`
 	CreatedAt   time.Time `json:"created_at"`
 }

@@ -137,6 +137,8 @@ func DeleteContentHandler(db *gorm.DB) http.HandlerFunc {
 type VideoUploadResponse struct {
 	ID       uint   `json:"id"`
 	VideoURL string `json:"video_url"`
+	ImageURL string `json:"image_url"`
+	Duration string `json:"duration"`
 }
 
 func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
@@ -206,7 +208,8 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 				http.Error(w, "Error saving the image file: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-			imageURL = imageFilePath
+			imageURL = fmt.Sprintf("/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
+
 		} else if err != http.ErrMissingFile {
 			http.Error(w, "Error retrieving the image file: "+err.Error(), http.StatusBadRequest)
 			return
@@ -218,11 +221,12 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, "Error getting video duration: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		duration, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+		durationSeconds, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
 		if err != nil {
 			http.Error(w, "Error parsing video duration: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+		duration := formatDuration(durationSeconds)
 
 		// Convert video to HLS format
 		hlsOutputPath := fmt.Sprintf("/var/www/academyserverapp/hls/videos/%d", time.Now().Unix())
@@ -251,7 +255,7 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			AuthorName:  authorName,
 			CreatedAt:   time.Now(),
 			ImageURL:    imageURL,
-			Duration:    uint(duration),
+			Duration:    duration,
 			IsLive:      false,
 			ViewCount:   0,
 		}
@@ -264,6 +268,8 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 		response := VideoUploadResponse{
 			ID:       content.ID,
 			VideoURL: videoURL,
+			ImageURL: imageURL,
+			Duration: content.Duration,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
@@ -292,4 +298,12 @@ func IncrementViewCountHandler(db *gorm.DB) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+// formatDuration converts a float64 duration in seconds to hh:mm:ss format
+func formatDuration(duration float64) string {
+	hours := int(duration / 3600)
+	minutes := int((duration - float64(hours*3600)) / 60)
+	seconds := int(duration - float64(hours*3600) - float64(minutes*60))
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 }
