@@ -69,9 +69,9 @@ func Initialize() {
 		log.Fatalf("Failed to migrate video model: %v", err)
 	}
 
-	// if err := DB.AutoMigrate(&attachment.Attachment{}); err != nil {
-	// 	log.Fatalf("Failed to migrate attachment model: %v", err)
-	// }
+	if err := DB.AutoMigrate(&attachment.Attachment{}); err != nil {
+		log.Fatalf("Failed to migrate attachment model: %v", err)
+	}
 
 	log.Println("Database migration successful ")
 }

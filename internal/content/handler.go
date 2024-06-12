@@ -74,12 +74,15 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 // 	return contents, nil
 // }
 
-// GetAttachmentsForContent retrieves attachments for a given content ID
+// GetAttachmentsForContent retrieves all attachments for a given content ID
 func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachment, error) {
 	var attachments []attachment.Attachment
-	if err := db.Where("content_id = ?", contentID).Find(&attachments).Error; err != nil {
+	err := db.Where("content_id = ?", contentID).Find(&attachments).Error
+	if err != nil {
+		log.Printf("Error retrieving attachments for content ID %d: %s", contentID, err)
 		return nil, err
 	}
+	log.Printf("Retrieved %d attachments for content ID %d", len(attachments), contentID)
 	return attachments, nil
 }
 
