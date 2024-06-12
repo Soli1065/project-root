@@ -77,19 +77,19 @@ func Initialize() {
 }
 
 // Function to insert new content into the database
-func InsertContent(content content.Content) (int, error) {
-	result := DB.Create(&content)
-	if result.Error != nil {
-		return 0, result.Error
-	}
-	return int(content.ID), nil
-}
+// func InsertContent(content content.Content) (int, error) {
+// 	result := DB.Create(&content)
+// 	if result.Error != nil {
+// 		return 0, result.Error
+// 	}
+// 	return int(content.ID), nil
+// }
 
 // Function to insert new attachment into the database
-func InsertAttachment(attachment attachment.Attachment) (int, error) {
-	result := DB.Create(&attachment)
-	if result.Error != nil {
-		return 0, result.Error
-	}
-	return int(attachment.ID), nil
-}
+// func InsertAttachment(attachment Attachment) (int, error) {
+// 	result := DB.Create(&attachment)
+// 	if result.Error != nil {
+// 		return 0, result.Error
+// 	}
+// 	return int(attachment.ID), nil
+// }

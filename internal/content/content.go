@@ -24,7 +24,14 @@ type Content struct {
 	IsLive       bool                    `gorm:"default:false" json:"is_live"`
 	MainFilePath string                  `json:"main_file_path"`
 	MainFileType string                  `json:"main_file_type"`
-	Attachments  []attachment.Attachment `json:"attachments"`
+	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
+}
+type Attachment struct {
+	ID        uint      `gorm:"primary_key" json:"id"`
+	ContentID uint      `json:"content_id"`
+	FilePath  string    `json:"file_path"`
+	FileType  string    `json:"file_type"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // GetAllContents retrieves all contents from the database

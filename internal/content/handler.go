@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"project-root/internal/attachment"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -17,8 +18,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"project-root/internal/attachment"
 )
 
 // // GetAllContentsHandler handles the request to retrieve all contents
@@ -46,8 +45,6 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 
 		// Update each content object before encoding to JSON
 		for i := range contents {
-			// Set the URL parameter as the value of main_file_path
-			contents[i].MainFilePath = contents[i].URL
 
 			// Populate attachments list
 			attachments, err := GetAttachmentsForContent(db, contents[i].ID)
@@ -79,10 +76,10 @@ func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachm
 	var attachments []attachment.Attachment
 	err := db.Where("content_id = ?", contentID).Find(&attachments).Error
 	if err != nil {
-		log.Printf("Error retrieving attachments for content ID %d: %s", contentID, err)
+		fmt.Printf("Error retrieving attachments for content ID %d: %s", contentID, err)
 		return nil, err
 	}
-	log.Printf("Retrieved %d attachments for content ID %d", len(attachments), contentID)
+	fmt.Printf("Retrieved %d attachments for content ID %d", len(attachments), contentID)
 	return attachments, nil
 }
 
