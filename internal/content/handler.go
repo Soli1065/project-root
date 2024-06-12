@@ -370,6 +370,12 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, "Invalid category ID", http.StatusBadRequest)
 			return
 		}
+		AuthorId, err := strconv.Atoi(r.FormValue("author_id"))
+		if err != nil {
+			http.Error(w, "Invalid author id ID", http.StatusBadRequest)
+			return
+		}
+		AuthorName := r.FormValue("author_name")
 
 		// Handle primary content file upload
 		mainFile, mainFileHeader, err := r.FormFile("main_file")
@@ -399,30 +405,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		// Handle image file upload (optional)
-		var imageURL string
-		imageFile, imageHeader, err := r.FormFile("image")
-		if err == nil {
-			defer imageFile.Close()
-			imageFilePath := fmt.Sprintf("/var/www/academyserverapp/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
-			imageFileDest, err := os.Create(imageFilePath)
-			if err != nil {
-				http.Error(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer imageFileDest.Close()
-			_, err = io.Copy(imageFileDest, imageFile)
-			if err != nil {
-				http.Error(w, "Error saving the image file: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			imageURL = fmt.Sprintf("/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
-		} else if err != http.ErrMissingFile {
-			http.Error(w, "Error retrieving the image file: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Handle video file conversion and duration (if the main file is a video)
+		var mainFileURL string
 		var duration string
 		if strings.ToLower(filepath.Ext(mainFileHeader.Filename)) == ".mp4" {
 			// Get video duration using ffmpeg
@@ -453,6 +436,33 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 				http.Error(w, "Could not process video", http.StatusInternalServerError)
 				return
 			}
+
+			mainFileURL = fmt.Sprintf("/hls/videos/%d/index.m3u8", time.Now().Unix())
+		} else {
+			mainFileURL = fmt.Sprintf("/contents/%d%s", time.Now().Unix(), filepath.Ext(mainFileHeader.Filename))
+		}
+
+		// Handle image file upload (optional)
+		var imageURL string
+		imageFile, imageHeader, err := r.FormFile("image")
+		if err == nil {
+			defer imageFile.Close()
+			imageFilePath := fmt.Sprintf("/var/www/academyserverapp/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
+			imageFileDest, err := os.Create(imageFilePath)
+			if err != nil {
+				http.Error(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer imageFileDest.Close()
+			_, err = io.Copy(imageFileDest, imageFile)
+			if err != nil {
+				http.Error(w, "Error saving the image file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			imageURL = fmt.Sprintf("/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
+		} else if err != http.ErrMissingFile {
+			http.Error(w, "Error retrieving the image file: "+err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		// Handle attachments upload (optional)
@@ -480,18 +490,57 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 				http.Error(w, "Error saving the attachment file: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
+
+			attachmentURL := fmt.Sprintf("/attachments/%d%s", time.Now().Unix(), filepath.Ext(attachmentHeader.Filename))
 			attachmentRecord := attachment.Attachment{
-				FilePath: attachmentFilePath,
+				FilePath: attachmentURL,
 				FileType: filepath.Ext(attachmentHeader.Filename),
 			}
+
+			if strings.ToLower(filepath.Ext(attachmentHeader.Filename)) == ".mp4" {
+				// Get video duration using ffmpeg
+				// output, err := exec.Command("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", attachmentFilePath).Output()
+				// if err != nil {
+				// 	http.Error(w, "Error getting video duration: "+err.Error(), http.StatusInternalServerError)
+				// 	return
+				// }
+				// durationSeconds, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+				// if err != nil {
+				// 	http.Error(w, "Error parsing video duration: "+err.Error(), http.StatusInternalServerError)
+				// 	return
+				// }
+				// attachmentRecord.Duration = formatDuration(durationSeconds)
+
+				// Convert video to HLS format
+				hlsOutputPath := fmt.Sprintf("/var/www/academyserverapp/hls/videos/%d", time.Now().Unix())
+				err = os.MkdirAll(hlsOutputPath, os.ModePerm)
+				if err != nil {
+					http.Error(w, "Could not create HLS output directory", http.StatusInternalServerError)
+					return
+				}
+
+				ffmpegCmd := exec.Command("ffmpeg", "-i", attachmentFilePath, "-codec:", "copy", "-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", filepath.Join(hlsOutputPath, "index.m3u8"))
+				ffmpegOutput, err := ffmpegCmd.CombinedOutput()
+				if err != nil {
+					log.Printf("FFmpeg command failed with error: %s\nOutput: %s", err, string(ffmpegOutput))
+					http.Error(w, "Could not process video", http.StatusInternalServerError)
+					return
+				}
+
+				attachmentRecord.FilePath = fmt.Sprintf("/hls/videos/%d/index.m3u8", time.Now().Unix())
+			}
+
 			attachments = append(attachments, attachmentRecord)
 		}
 
 		// Store content record in database
-		content := Content{
+		contentRecord := Content{
 			Title:        title,
 			Description:  description,
-			MainFilePath: mainFilePath,
+			URL:          mainFileURL,
+			AuthorID:     uint(AuthorId),
+			AuthorName:   AuthorName,
+			MainFilePath: mainFileURL,
 			MainFileType: filepath.Ext(mainFileHeader.Filename),
 			ImageURL:     imageURL,
 			Duration:     duration,
@@ -499,15 +548,15 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			CreatedAt:    time.Now(),
 			Attachments:  attachments,
 		}
-		if err := db.Create(&content).Error; err != nil {
+		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)
 			return
 		}
 
 		// Respond with the content details
 		response := UploadResponse{
-			ID:          content.ID,
-			ContentURL:  mainFilePath,
+			ID:          contentRecord.ID,
+			ContentURL:  mainFileURL,
 			ImageURL:    imageURL,
 			Duration:    duration,
 			Attachments: attachments,
