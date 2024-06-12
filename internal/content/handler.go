@@ -34,6 +34,7 @@ import (
 //		}
 //	}
 //
+
 // GetAllContentsHandler handles the request to retrieve all contents
 func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -55,13 +56,23 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 				return
 			}
 			contents[i].Attachments = attachments
-
 		}
 
 		// Encode contents to JSON
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(contents)
 	}
 }
+
+// GetAllContents retrieves all content records from the database
+// func GetAllContents(db *gorm.DB) ([]Content, error) {
+// 	var contents []Content
+// 	err := db.Find(&contents).Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return contents, nil
+// }
 
 // GetAttachmentsForContent retrieves attachments for a given content ID
 func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachment, error) {
