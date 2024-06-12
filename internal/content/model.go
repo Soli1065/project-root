@@ -22,7 +22,7 @@ type ContentModel struct {
 	CreatedAt    time.Time               `json:"created_at"`
 	MainFilePath string                  `json:"main_file_path"`
 	MainFileType string                  `json:"main_file_type"`
-	Attachments  []attachment.Attachment `json:"attachments"`
+	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 }
 
 // TableName specifies the table name for ContentModel
