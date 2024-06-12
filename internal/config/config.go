@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"project-root/internal/attachment"
 	"project-root/internal/category"
 	"project-root/internal/content"
 	"project-root/internal/recommendation"
@@ -68,5 +69,27 @@ func Initialize() {
 		log.Fatalf("Failed to migrate video model: %v", err)
 	}
 
+	if err := DB.AutoMigrate(&attachment.Attachment{}); err != nil {
+		log.Fatalf("Failed to migrate attachment model: %v", err)
+	}
+
 	log.Println("Database migration successful ")
+}
+
+// Function to insert new content into the database
+func InsertContent(content content.Content) (int, error) {
+	result := DB.Create(&content)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return int(content.ID), nil
+}
+
+// Function to insert new attachment into the database
+func InsertAttachment(attachment attachment.Attachment) (int, error) {
+	result := DB.Create(&attachment)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return int(attachment.ID), nil
 }

@@ -2,6 +2,7 @@
 package content
 
 import (
+	"project-root/internal/attachment"
 	"time"
 
 	"gorm.io/gorm"
@@ -9,18 +10,21 @@ import (
 
 // Content represents a content item
 type Content struct {
-	ID          uint      `gorm:"primary_key" json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	URL         string    `json:"url"`
-	CategoryID  uint      `json:"category_id"`
-	AuthorID    uint      `json:"author_id"`
-	AuthorName  string    `json:"author_name"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	ImageURL    string    `gorm:"type:varchar(255)" json:"image_url"`
-	ViewCount   uint      `gorm:"default:0" json:"view_count"`
-	Duration    string    `json:"duration"`
-	IsLive      bool      `gorm:"default:false" json:"is_live"`
+	ID           uint                    `gorm:"primary_key" json:"id"`
+	Title        string                  `json:"title"`
+	Description  string                  `json:"description"`
+	URL          string                  `json:"url"`
+	CategoryID   uint                    `json:"category_id"`
+	AuthorID     uint                    `json:"author_id"`
+	AuthorName   string                  `json:"author_name"`
+	CreatedAt    time.Time               `gorm:"autoCreateTime"`
+	ImageURL     string                  `gorm:"type:varchar(255)" json:"image_url"`
+	ViewCount    uint                    `gorm:"default:0" json:"view_count"`
+	Duration     string                  `json:"duration"`
+	IsLive       bool                    `gorm:"default:false" json:"is_live"`
+	MainFilePath string                  `json:"main_file_path"`
+	MainFileType string                  `json:"main_file_type"`
+	Attachments  []attachment.Attachment `json:"attachments"`
 }
 
 // GetAllContents retrieves all contents from the database

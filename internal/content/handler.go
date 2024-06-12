@@ -17,6 +17,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"project-root/internal/attachment"
 )
 
 // GetAllContentsHandler handles the request to retrieve all contents
@@ -306,4 +308,172 @@ func formatDuration(duration float64) string {
 	minutes := int((duration - float64(hours*3600)) / 60)
 	seconds := int(duration - float64(hours*3600) - float64(minutes*60))
 	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+type UploadResponse struct {
+	ID          uint                    `json:"id"`
+	ContentURL  string                  `json:"content_url"`
+	ImageURL    string                  `json:"image_url"`
+	Duration    string                  `json:"duration,omitempty"`
+	Attachments []attachment.Attachment `json:"attachments,omitempty"`
+}
+
+func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Set a maximum upload size of 100 MB
+		r.Body = http.MaxBytesReader(w, r.Body, 100<<20) // 100MB
+
+		// Parse form values
+		title := r.FormValue("title")
+		description := r.FormValue("description")
+		categoryID, err := strconv.Atoi(r.FormValue("category_id"))
+		if err != nil {
+			http.Error(w, "Invalid category ID", http.StatusBadRequest)
+			return
+		}
+
+		// Handle primary content file upload
+		mainFile, mainFileHeader, err := r.FormFile("main_file")
+		if err != nil {
+			http.Error(w, "Could not get uploaded main file", http.StatusBadRequest)
+			return
+		}
+		defer mainFile.Close()
+
+		// Check main file size
+		if mainFileHeader.Size > 100<<20 { // 100MB
+			http.Error(w, "File size exceeds 100MB limit", http.StatusBadRequest)
+			return
+		}
+
+		// Save the uploaded main file
+		mainFilePath := fmt.Sprintf("/var/www/academyserverapp/contents/%d%s", time.Now().Unix(), filepath.Ext(mainFileHeader.Filename))
+		mainFileDest, err := os.Create(mainFilePath)
+		if err != nil {
+			http.Error(w, "Could not create main file", http.StatusInternalServerError)
+			return
+		}
+		defer mainFileDest.Close()
+		_, err = io.Copy(mainFileDest, mainFile)
+		if err != nil {
+			http.Error(w, "Could not copy main file to destination", http.StatusInternalServerError)
+			return
+		}
+
+		// Handle image file upload (optional)
+		var imageURL string
+		imageFile, imageHeader, err := r.FormFile("image")
+		if err == nil {
+			defer imageFile.Close()
+			imageFilePath := fmt.Sprintf("/var/www/academyserverapp/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
+			imageFileDest, err := os.Create(imageFilePath)
+			if err != nil {
+				http.Error(w, "Error creating image file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer imageFileDest.Close()
+			_, err = io.Copy(imageFileDest, imageFile)
+			if err != nil {
+				http.Error(w, "Error saving the image file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			imageURL = fmt.Sprintf("/images/%d%s", time.Now().Unix(), filepath.Ext(imageHeader.Filename))
+		} else if err != http.ErrMissingFile {
+			http.Error(w, "Error retrieving the image file: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Handle video file conversion and duration (if the main file is a video)
+		var duration string
+		if strings.ToLower(filepath.Ext(mainFileHeader.Filename)) == ".mp4" {
+			// Get video duration using ffmpeg
+			output, err := exec.Command("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", mainFilePath).Output()
+			if err != nil {
+				http.Error(w, "Error getting video duration: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			durationSeconds, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+			if err != nil {
+				http.Error(w, "Error parsing video duration: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			duration = formatDuration(durationSeconds)
+
+			// Convert video to HLS format
+			hlsOutputPath := fmt.Sprintf("/var/www/academyserverapp/hls/videos/%d", time.Now().Unix())
+			err = os.MkdirAll(hlsOutputPath, os.ModePerm)
+			if err != nil {
+				http.Error(w, "Could not create HLS output directory", http.StatusInternalServerError)
+				return
+			}
+
+			ffmpegCmd := exec.Command("ffmpeg", "-i", mainFilePath, "-codec:", "copy", "-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", filepath.Join(hlsOutputPath, "index.m3u8"))
+			ffmpegOutput, err := ffmpegCmd.CombinedOutput()
+			if err != nil {
+				log.Printf("FFmpeg command failed with error: %s\nOutput: %s", err, string(ffmpegOutput))
+				http.Error(w, "Could not process video", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Handle attachments upload (optional)
+		attachments := []attachment.Attachment{}
+		for i := 0; i < 5; i++ { // Assuming a maximum of 5 attachments for example
+			fileKey := fmt.Sprintf("attachment_%d", i+1)
+			attachmentFile, attachmentHeader, err := r.FormFile(fileKey)
+			if err == http.ErrMissingFile {
+				continue
+			} else if err != nil {
+				http.Error(w, "Error retrieving attachment file: "+err.Error(), http.StatusBadRequest)
+				return
+			}
+			defer attachmentFile.Close()
+
+			attachmentFilePath := fmt.Sprintf("/var/www/academyserverapp/attachments/%d%s", time.Now().Unix(), filepath.Ext(attachmentHeader.Filename))
+			attachmentFileDest, err := os.Create(attachmentFilePath)
+			if err != nil {
+				http.Error(w, "Error creating attachment file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer attachmentFileDest.Close()
+			_, err = io.Copy(attachmentFileDest, attachmentFile)
+			if err != nil {
+				http.Error(w, "Error saving the attachment file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			attachmentRecord := attachment.Attachment{
+				FilePath: attachmentFilePath,
+				FileType: filepath.Ext(attachmentHeader.Filename),
+			}
+			attachments = append(attachments, attachmentRecord)
+		}
+
+		// Store content record in database
+		contentRecord := Content{
+			Title:        title,
+			Description:  description,
+			MainFilePath: mainFilePath,
+			MainFileType: filepath.Ext(mainFileHeader.Filename),
+			ImageURL:     imageURL,
+			Duration:     duration,
+			CategoryID:   uint(categoryID),
+			CreatedAt:    time.Now(),
+			Attachments:  attachments,
+		}
+		if err := db.Create(&contentRecord).Error; err != nil {
+			http.Error(w, "Could not save content record", http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with the content details
+		response := UploadResponse{
+			ID:          contentRecord.ID,
+			ContentURL:  mainFilePath,
+			ImageURL:    imageURL,
+			Duration:    duration,
+			Attachments: attachments,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
 }
