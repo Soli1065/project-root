@@ -21,6 +21,19 @@ import (
 	"project-root/internal/attachment"
 )
 
+// // GetAllContentsHandler handles the request to retrieve all contents
+//
+//	func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
+//		return func(w http.ResponseWriter, r *http.Request) {
+//			contents, err := GetAllContents(db)
+//			if err != nil {
+//				http.Error(w, err.Error(), http.StatusInternalServerError)
+//				return
+//			}
+//			json.NewEncoder(w).Encode(contents)
+//		}
+//	}
+//
 // GetAllContentsHandler handles the request to retrieve all contents
 func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -29,8 +42,34 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		// Update each content object before encoding to JSON
+		for i := range contents {
+			// Set the URL parameter as the value of main_file_path
+			contents[i].MainFilePath = contents[i].URL
+
+			// Populate attachments list
+			attachments, err := GetAttachmentsForContent(db, contents[i].ID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			contents[i].Attachments = attachments
+
+		}
+
+		// Encode contents to JSON
 		json.NewEncoder(w).Encode(contents)
 	}
+}
+
+// GetAttachmentsForContent retrieves attachments for a given content ID
+func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachment, error) {
+	var attachments []attachment.Attachment
+	if err := db.Where("content_id = ?", contentID).Find(&attachments).Error; err != nil {
+		return nil, err
+	}
+	return attachments, nil
 }
 
 // GetContentByIDHandler handles the request to retrieve a content by its ID
@@ -449,7 +488,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		// Store content record in database
-		contentRecord := Content{
+		content := Content{
 			Title:        title,
 			Description:  description,
 			MainFilePath: mainFilePath,
@@ -460,14 +499,14 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			CreatedAt:    time.Now(),
 			Attachments:  attachments,
 		}
-		if err := db.Create(&contentRecord).Error; err != nil {
+		if err := db.Create(&content).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)
 			return
 		}
 
 		// Respond with the content details
 		response := UploadResponse{
-			ID:          contentRecord.ID,
+			ID:          content.ID,
 			ContentURL:  mainFilePath,
 			ImageURL:    imageURL,
 			Duration:    duration,
