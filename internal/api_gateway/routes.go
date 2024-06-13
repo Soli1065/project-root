@@ -28,7 +28,8 @@ func SetAPIRoutes(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/users/{id}", user.DeleteUserHandler(db)).Methods("DELETE")
 
 	// Content routes
-	router.HandleFunc("/content", content.GetAllContentHandler(db)).Methods("GET")
+	router.HandleFunc("/content/old", content.GetAllContentHandler(db)).Methods("GET")
+	router.HandleFunc("/content", content.GetAllContentsHandler(db)).Methods("GET")
 	router.HandleFunc("/content/{id}", content.GetContentByIDHandler(db)).Methods("GET")
 	router.HandleFunc("/content", content.CreateContentHandler(db)).Methods("POST")
 	router.HandleFunc("/content/upload_new", content.UploadContentHandler(db)).Methods("POST")

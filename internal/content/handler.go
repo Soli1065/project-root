@@ -47,6 +47,8 @@ func init() {
 //	}
 //
 
+///////// placeholder for get all contents handler
+
 // GetAllContentsHandler handles the request to retrieve all contents
 func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
