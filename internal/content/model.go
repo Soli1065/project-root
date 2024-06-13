@@ -1,4 +1,3 @@
-// internal/content/model.go
 package content
 
 // import (

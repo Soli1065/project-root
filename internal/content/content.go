@@ -1,9 +1,9 @@
-// internal/content/content.go
 package content
 
 import (
 	"project-root/internal/attachment"
 	"project-root/internal/comment"
+	"project-root/internal/tag"
 
 	"time"
 
@@ -28,15 +28,8 @@ type Content struct {
 	MainFileType string                  `json:"main_file_type"`
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
+	Tags         []tag.Tag               `json:"tags" gorm:"many2many:content_tags;"`
 }
-
-// type Attachment struct {
-// 	ID        uint      `gorm:"primary_key" json:"id"`
-// 	ContentID uint      `json:"content_id"`
-// 	FilePath  string    `json:"file_path"`
-// 	FileType  string    `json:"file_type"`
-// 	CreatedAt time.Time `json:"created_at"`
-// }
 
 // GetAllContents retrieves all contents from the database
 func GetAllContents(db *gorm.DB) ([]Content, error) {

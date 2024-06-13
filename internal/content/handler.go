@@ -557,6 +557,17 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			attachments = append(attachments, attachmentRecord)
 		}
 
+		// // handle tags
+		// tagIDs := r.Form["tag_ids"]
+		// for _, tagID := range tagIDs {
+		//     var tag tag.Tag
+		//     if err := db.First(&tag, tagID).Error; err != nil {
+		//         http.Error(w, "Tag not found", http.StatusNotFound)
+		//         return
+		//     }
+		//     content.Tags = append(content.Tags, tag)
+		// }
+
 		// Store content record in database
 		contentRecord := Content{
 			Title:        title,
