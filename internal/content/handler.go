@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"project-root/internal/attachment"
+	"project-root/internal/category"
 	"project-root/internal/comment"
 
 	"strconv"
@@ -28,43 +29,31 @@ import (
 // GetAllContentsHandler handles the request to retrieve all contents
 func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		contents, err := GetAllContents(db)
-		if err != nil {
-			// log.Error("Failed to get all contents: ", err)
+		var contents []Content
 
+		// Fetch all contents with attachments and categories preloaded
+		if err := db.Preload("Attachments").Preload("Categories").Find(&contents).Error; err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Update each content object before encoding to JSON
+		// Update each content object with comments
 		for i := range contents {
-
-			// Populate attachments list
-			attachments, err := GetAttachmentsForContent(db, contents[i].ID)
-			if err != nil {
-				// log.Error("Failed to get attachments for content ID ", contents[i].ID, ": ", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			contents[i].Attachments = attachments
-
 			// Populate comments list
 			comments, err := GetCommentsForContent(db, contents[i].ID)
 			if err != nil {
-				// log.Error("Failed to get comments for content ID ", contents[i].ID, ": ", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			contents[i].Comments = comments
 
-			// Log the content object
-			fmt.Printf("Content ID %d: %+v", contents[i].ID, contents[i])
+			// Log the content object (if needed)
+			// fmt.Printf("Content ID %d: %+v", contents[i].ID, contents[i])
 		}
 
 		// Encode contents to JSON
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(contents); err != nil {
-			// log.Error("Failed to encode JSON: ", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -582,6 +571,21 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
+		//handle categories
+		categoryIDs := r.Form["category_ids"] // Assuming category IDs are sent as form values
+
+		// Fetch categories by IDs
+		var categories []category.Category
+		for _, idStr := range categoryIDs {
+			id, _ := strconv.Atoi(idStr)
+			var category category.Category
+			if err := db.First(&category, id).Error; err != nil {
+				http.Error(w, "Category not found", http.StatusNotFound)
+				return
+			}
+			categories = append(categories, category)
+		}
+
 		// Store content record in database
 		contentRecord := Content{
 			Title:        title,
@@ -597,6 +601,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			CreatedAt:    time.Now(),
 			Attachments:  attachments,
 			Tags:         tags,
+			Categories:   categories,
 		}
 		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)

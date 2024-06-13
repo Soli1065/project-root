@@ -57,7 +57,7 @@ func Initialize() {
 		log.Fatalf("Failed to migrate content model: %v", err)
 	}
 
-	if err := DB.AutoMigrate(&category.CategoryModel{}); err != nil {
+	if err := DB.AutoMigrate(&category.Category{}); err != nil {
 		log.Fatalf("Failed to migrate category model: %v", err)
 	}
 
