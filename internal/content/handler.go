@@ -209,11 +209,11 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 		authorName := r.FormValue("author_name")
-		categoryID, err := strconv.Atoi(r.FormValue("category_id"))
-		if err != nil {
-			http.Error(w, "Invalid category ID", http.StatusBadRequest)
-			return
-		}
+		// categoryID, err := strconv.Atoi(r.FormValue("category_id"))
+		// if err != nil {
+		// 	http.Error(w, "Invalid category ID", http.StatusBadRequest)
+		// 	return
+		// }
 
 		// Handle file upload
 		file, handler, err := r.FormFile("video")
@@ -304,14 +304,14 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 			Title:       title,
 			Description: description,
 			URL:         videoURL,
-			CategoryID:  uint(categoryID),
-			AuthorID:    uint(authorID),
-			AuthorName:  authorName,
-			CreatedAt:   time.Now(),
-			ImageURL:    imageURL,
-			Duration:    duration,
-			IsLive:      false,
-			ViewCount:   0,
+			// CategoryID:  uint(categoryID),
+			AuthorID:   uint(authorID),
+			AuthorName: authorName,
+			CreatedAt:  time.Now(),
+			ImageURL:   imageURL,
+			Duration:   duration,
+			IsLive:     false,
+			ViewCount:  0,
 		}
 		if err := db.Create(&content).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)
