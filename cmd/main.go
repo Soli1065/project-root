@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	// "log"
+	"log"
 	"net/http"
 
 	"project-root/internal/api_gateway"
@@ -12,22 +12,10 @@ import (
 	"project-root/internal/config"
 	"project-root/internal/pkg/middleware"
 
-	"os"
-
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
-var log = logrus.New()
-
-func init() {
-	log.SetFormatter(&logrus.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(logrus.DebugLevel)
-}
-
 func main() {
-	log.Info("Starting the server...")
 	fmt.Printf("Server is starting... \n")
 
 	// Initialize the configuration and database connection

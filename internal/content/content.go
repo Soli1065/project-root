@@ -3,6 +3,8 @@ package content
 
 import (
 	"project-root/internal/attachment"
+	"project-root/internal/comment"
+
 	"time"
 
 	"gorm.io/gorm"
@@ -25,6 +27,7 @@ type Content struct {
 	MainFilePath string                  `json:"main_file_path"`
 	MainFileType string                  `json:"main_file_type"`
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
+	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
 }
 
 // type Attachment struct {

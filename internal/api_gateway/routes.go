@@ -5,6 +5,7 @@ package api_gateway
 import (
 	"project-root/internal/auth"
 	"project-root/internal/category"
+	"project-root/internal/comment"
 	"project-root/internal/content"
 	"project-root/internal/recommendation"
 	"project-root/internal/user"
@@ -55,5 +56,11 @@ func SetAPIRoutes(router *mux.Router, db *gorm.DB) {
 	// Video routes
 	router.HandleFunc("/videos", video.CreateVideoHandler(db)).Methods("POST")
 	router.HandleFunc("/videos/{id}", video.GetVideoByIDHandler(db)).Methods("GET")
+
+	// Comment routes
+	router.HandleFunc("/contents/{contentID}/comments", comment.CreateCommentHandler(db)).Methods("POST")
+	router.HandleFunc("/contents/{contentID}/comments", comment.GetCommentsHandler(db)).Methods("GET")
+	router.HandleFunc("/comments/{commentID}", comment.UpdateCommentHandler(db)).Methods("PUT")
+	router.HandleFunc("/comments/{commentID}", comment.DeleteCommentHandler(db)).Methods("DELETE")
 
 }

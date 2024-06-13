@@ -6,6 +6,7 @@ import (
 
 	"project-root/internal/attachment"
 	"project-root/internal/category"
+	"project-root/internal/comment"
 	"project-root/internal/content"
 	"project-root/internal/recommendation"
 	"project-root/internal/user"
@@ -70,6 +71,10 @@ func Initialize() {
 	}
 
 	if err := DB.AutoMigrate(&attachment.Attachment{}); err != nil {
+		log.Fatalf("Failed to migrate attachment model: %v", err)
+	}
+
+	if err := DB.AutoMigrate(&comment.Comment{}); err != nil {
 		log.Fatalf("Failed to migrate attachment model: %v", err)
 	}
 

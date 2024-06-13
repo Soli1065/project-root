@@ -3,9 +3,11 @@ package content
 
 import (
 	"encoding/json"
-	// "log"
+	"log"
 	"net/http"
 	"project-root/internal/attachment"
+	"project-root/internal/comment"
+
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -21,40 +23,14 @@ import (
 	"time"
 
 	"os"
-
-	"github.com/sirupsen/logrus"
 )
-
-var log = logrus.New()
-
-func init() {
-	log.SetFormatter(&logrus.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(logrus.DebugLevel)
-}
-
-// // GetAllContentsHandler handles the request to retrieve all contents
-//
-//	func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
-//		return func(w http.ResponseWriter, r *http.Request) {
-//			contents, err := GetAllContents(db)
-//			if err != nil {
-//				http.Error(w, err.Error(), http.StatusInternalServerError)
-//				return
-//			}
-//			json.NewEncoder(w).Encode(contents)
-//		}
-//	}
-//
-
-///////// placeholder for get all contents handler
 
 // GetAllContentsHandler handles the request to retrieve all contents
 func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		contents, err := GetAllContents(db)
 		if err != nil {
-			log.Error("Failed to get all contents: ", err)
+			// log.Error("Failed to get all contents: ", err)
 
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -66,17 +42,20 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 			// Populate attachments list
 			attachments, err := GetAttachmentsForContent(db, contents[i].ID)
 			if err != nil {
-				log.Error("Failed to get attachments for content ID ", contents[i].ID, ": ", err)
+				// log.Error("Failed to get attachments for content ID ", contents[i].ID, ": ", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			contents[i].Attachments = attachments
 
-			log.WithFields(logrus.Fields{
-				"content_id":  contents[i].ID,
-				"title":       contents[i].Title,
-				"attachments": contents[i].Attachments,
-			}).Info("Processed content")
+			// Populate comments list
+			comments, err := GetCommentsForContent(db, contents[i].ID)
+			if err != nil {
+				// log.Error("Failed to get comments for content ID ", contents[i].ID, ": ", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			contents[i].Comments = comments
 
 			// Log the content object
 			fmt.Printf("Content ID %d: %+v", contents[i].ID, contents[i])
@@ -85,33 +64,35 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 		// Encode contents to JSON
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(contents); err != nil {
-			log.Error("Failed to encode JSON: ", err)
+			// log.Error("Failed to encode JSON: ", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }
-
-// GetAllContents retrieves all content records from the database
-// func GetAllContents(db *gorm.DB) ([]Content, error) {
-// 	var contents []Content
-// 	err := db.Find(&contents).Error
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return contents, nil
-// }
 
 // GetAttachmentsForContent retrieves all attachments for a given content ID
 func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachment, error) {
 	var attachments []attachment.Attachment
 	err := db.Where("content_id = ?", contentID).Find(&attachments).Error
 	if err != nil {
-		log.Error("Error retrieving attachments for content ID ", contentID, ": ", err)
+		// log.Error("Error retrieving attachments for content ID ", contentID, ": ", err)
 		return nil, err
 	}
-	log.Infof("Retrieved %d attachments for content ID %d", len(attachments), contentID)
+	// log.Infof("Retrieved %d attachments for content ID %d", len(attachments), contentID)
 
 	return attachments, nil
+}
+
+// GetCommentsForContent retrieves all comments for a given content ID
+func GetCommentsForContent(db *gorm.DB, contentID uint) ([]comment.Comment, error) {
+	var comments []comment.Comment
+	err := db.Where("content_id = ?", contentID).Find(&comments).Error
+	if err != nil {
+		log.Printf("Error retrieving comments for content ID %d: %s", contentID, err)
+		return nil, err
+	}
+	log.Printf("Retrieved %d comments for content ID %d", len(comments), contentID)
+	return comments, nil
 }
 
 // GetContentByIDHandler handles the request to retrieve a content by its ID
@@ -151,6 +132,7 @@ func CreateContentHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// legacy - old - should remove in future
 // GetAllContentHandler retrieves all content items from the database
 func GetAllContentHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
