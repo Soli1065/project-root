@@ -569,7 +569,14 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		// }
 
 		// Assume tags are sent as an array of strings in the request body
-		tags := make([]string, 0)
+		// tags := make([]string, 0)
+		// if err := json.Unmarshal([]byte(r.FormValue("tags")), &tags); err != nil {
+		// 	http.Error(w, err.Error(), http.StatusBadRequest)
+		// 	return
+		// }
+
+		// Assume tags are sent as an array of strings in the request body
+		var tags []string
 		if err := json.Unmarshal([]byte(r.FormValue("tags")), &tags); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

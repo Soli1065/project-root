@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
+	"github.com/lib/pq" // Import pq package for PostgreSQL array support
 )
 
 // Content represents a content record in the database
@@ -29,7 +31,8 @@ type Content struct {
 	MainFileType string                  `json:"main_file_type"`
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
-	Tags         []string                `gorm:"type:text[]" json:"tags"`
+	Tags         pq.StringArray          `gorm:"type:text[]"` // PostgreSQL array type for tags
+	// Tags         []string                `gorm:"type:text[]" json:"tags"`
 	// Tags         []tag.Tag       `json:"tags" gorm:"foreignKey:ContentID"`
 }
 
