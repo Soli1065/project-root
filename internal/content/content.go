@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Content represents a content item
+// Content represents a content record in the database
 type Content struct {
 	ID           uint                    `gorm:"primary_key" json:"id"`
 	Title        string                  `json:"title"`
@@ -17,7 +17,7 @@ type Content struct {
 	CategoryID   uint                    `json:"category_id"`
 	AuthorID     uint                    `json:"author_id"`
 	AuthorName   string                  `json:"author_name"`
-	CreatedAt    time.Time               `gorm:"autoCreateTime"`
+	CreatedAt    time.Time               `gorm:"autoCreateTime" json:"created_at"`
 	ImageURL     string                  `gorm:"type:varchar(255)" json:"image_url"`
 	ViewCount    uint                    `gorm:"default:0" json:"view_count"`
 	Duration     string                  `json:"duration"`
@@ -26,13 +26,14 @@ type Content struct {
 	MainFileType string                  `json:"main_file_type"`
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 }
-type Attachment struct {
-	ID        uint      `gorm:"primary_key" json:"id"`
-	ContentID uint      `json:"content_id"`
-	FilePath  string    `json:"file_path"`
-	FileType  string    `json:"file_type"`
-	CreatedAt time.Time `json:"created_at"`
-}
+
+// type Attachment struct {
+// 	ID        uint      `gorm:"primary_key" json:"id"`
+// 	ContentID uint      `json:"content_id"`
+// 	FilePath  string    `json:"file_path"`
+// 	FileType  string    `json:"file_type"`
+// 	CreatedAt time.Time `json:"created_at"`
+// }
 
 // GetAllContents retrieves all contents from the database
 func GetAllContents(db *gorm.DB) ([]Content, error) {

@@ -2,6 +2,7 @@ package attachment
 
 import "time"
 
+// Attachment represents an attachment record in the database
 type Attachment struct {
 	ID        int       `json:"id" gorm:"primary_key"`
 	ContentID int       `json:"content_id"`
