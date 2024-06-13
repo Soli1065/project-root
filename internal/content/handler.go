@@ -378,11 +378,11 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		// Parse form values
 		title := r.FormValue("title")
 		description := r.FormValue("description")
-		categoryID, err := strconv.Atoi(r.FormValue("category_id"))
-		if err != nil {
-			http.Error(w, "Invalid category ID", http.StatusBadRequest)
-			return
-		}
+		// categoryID, err := strconv.Atoi(r.FormValue("category_id"))
+		// if err != nil {
+		// 	http.Error(w, "Invalid category ID", http.StatusBadRequest)
+		// 	return
+		// }
 		AuthorId, err := strconv.Atoi(r.FormValue("author_id"))
 		if err != nil {
 			http.Error(w, "Invalid author id ID", http.StatusBadRequest)
@@ -572,12 +572,21 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		//handle categories
-		categoryIDs := r.Form["category_ids"] // Assuming category IDs are sent as form values
+		// Get the comma-separated category IDs
+		categoryIDsStr := r.FormValue("category_ids") // Single string of IDs
+
+		// Split the string into individual ID strings
+		categoryIDStrs := strings.Split(categoryIDsStr, ",")
 
 		// Fetch categories by IDs
 		var categories []category.Category
-		for _, idStr := range categoryIDs {
-			id, _ := strconv.Atoi(idStr)
+		for _, idStr := range categoryIDStrs {
+			idStr = strings.TrimSpace(idStr) // Trim any surrounding whitespace
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				http.Error(w, "Invalid category ID", http.StatusBadRequest)
+				return
+			}
 			var category category.Category
 			if err := db.First(&category, id).Error; err != nil {
 				http.Error(w, "Category not found", http.StatusNotFound)
@@ -597,11 +606,11 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			MainFileType: filepath.Ext(mainFileHeader.Filename),
 			ImageURL:     imageURL,
 			Duration:     duration,
-			CategoryID:   uint(categoryID),
-			CreatedAt:    time.Now(),
-			Attachments:  attachments,
-			Tags:         tags,
-			Categories:   categories,
+			// CategoryID:   uint(categoryID),
+			CreatedAt:   time.Now(),
+			Attachments: attachments,
+			Tags:        tags,
+			Categories:  categories,
 		}
 		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)

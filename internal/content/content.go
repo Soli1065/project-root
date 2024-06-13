@@ -30,8 +30,8 @@ type Content struct {
 	IsLive       bool                    `gorm:"default:false" json:"is_live"`
 	MainFilePath string                  `json:"main_file_path"`
 	MainFileType string                  `json:"main_file_type"`
-	CategoryIDs  []uint                  `gorm:"-"`                             // Ignored by GORM, used for handling IDs from request
-	Categories   []category.Category     `gorm:"many2many:content_categories;"` // Define the many-to-many relationship
+	CategoryIDs  []uint                  `gorm:"-" json:"category_ids"`                           // Ignored by GORM, used for handling IDs from request
+	Categories   []category.Category     `gorm:"many2many:content_categories;" json:"categories"` // Define the many-to-many relationship
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
 	Tags         pq.StringArray          `gorm:"type:text[]"` // PostgreSQL array type for tags
