@@ -12,6 +12,12 @@ import (
 	"project-root/internal/config"
 	"project-root/internal/pkg/middleware"
 
+	"encoding/json"
+	"project-root/internal/attachment"
+	"project-root/internal/content"
+
+	"gorm.io/gorm"
+
 	"os"
 
 	"github.com/gorilla/mux"
@@ -59,4 +65,59 @@ func main() {
 	if err := api_gateway.RunServer(corsRouter, addr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// GetAllContentsHandler handles the request to retrieve all contents
+func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		contents, err := content.GetAllContents(db)
+		if err != nil {
+			log.Error("Failed to get all contents: ", err)
+
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Update each content object before encoding to JSON
+		for i := range contents {
+
+			// Populate attachments list
+			attachments, err := GetAttachmentsForContent(db, contents[i].ID)
+			if err != nil {
+				log.Error("Failed to get attachments for content ID ", contents[i].ID, ": ", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			contents[i].Attachments = attachments
+
+			log.WithFields(logrus.Fields{
+				"content_id":  contents[i].ID,
+				"title":       contents[i].Title,
+				"attachments": contents[i].Attachments,
+			}).Info("Processed content")
+
+			// Log the content object
+			fmt.Printf("Content ID %d: %+v", contents[i].ID, contents[i])
+		}
+
+		// Encode contents to JSON
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(contents); err != nil {
+			log.Error("Failed to encode JSON: ", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+// GetAttachmentsForContent retrieves all attachments for a given content ID
+func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachment, error) {
+	var attachments []attachment.Attachment
+	err := db.Where("content_id = ?", contentID).Find(&attachments).Error
+	if err != nil {
+		log.Error("Error retrieving attachments for content ID ", contentID, ": ", err)
+		return nil, err
+	}
+	log.Infof("Retrieved %d attachments for content ID %d", len(attachments), contentID)
+
+	return attachments, nil
 }
