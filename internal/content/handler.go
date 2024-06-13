@@ -3,7 +3,7 @@ package content
 
 import (
 	"encoding/json"
-	"log"
+	// "log"
 	"net/http"
 	"project-root/internal/attachment"
 	"strconv"
@@ -13,12 +13,25 @@ import (
 
 	"fmt"
 	"io"
-	"os"
+
+	// "os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"os"
+
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
+
+func init() {
+	log.SetFormatter(&logrus.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(logrus.DebugLevel)
+}
 
 // // GetAllContentsHandler handles the request to retrieve all contents
 //
@@ -39,6 +52,8 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		contents, err := GetAllContents(db)
 		if err != nil {
+			log.Error("Failed to get all contents: ", err)
+
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -49,15 +64,28 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 			// Populate attachments list
 			attachments, err := GetAttachmentsForContent(db, contents[i].ID)
 			if err != nil {
+				log.Error("Failed to get attachments for content ID ", contents[i].ID, ": ", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			contents[i].Attachments = attachments
+
+			log.WithFields(logrus.Fields{
+				"content_id":  contents[i].ID,
+				"title":       contents[i].Title,
+				"attachments": contents[i].Attachments,
+			}).Info("Processed content")
+
+			// Log the content object
+			fmt.Printf("Content ID %d: %+v", contents[i].ID, contents[i])
 		}
 
 		// Encode contents to JSON
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(contents)
+		if err := json.NewEncoder(w).Encode(contents); err != nil {
+			log.Error("Failed to encode JSON: ", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -76,10 +104,11 @@ func GetAttachmentsForContent(db *gorm.DB, contentID uint) ([]attachment.Attachm
 	var attachments []attachment.Attachment
 	err := db.Where("content_id = ?", contentID).Find(&attachments).Error
 	if err != nil {
-		fmt.Printf("Error retrieving attachments for content ID %d: %s", contentID, err)
+		log.Error("Error retrieving attachments for content ID ", contentID, ": ", err)
 		return nil, err
 	}
-	fmt.Printf("Retrieved %d attachments for content ID %d", len(attachments), contentID)
+	log.Infof("Retrieved %d attachments for content ID %d", len(attachments), contentID)
+
 	return attachments, nil
 }
 
