@@ -568,6 +568,13 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		//     content.Tags = append(content.Tags, tag)
 		// }
 
+		// Assume tags are sent as an array of strings in the request body
+		tags := make([]string, 0)
+		if err := json.Unmarshal([]byte(r.FormValue("tags")), &tags); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		// Store content record in database
 		contentRecord := Content{
 			Title:        title,
@@ -582,6 +589,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			CategoryID:   uint(categoryID),
 			CreatedAt:    time.Now(),
 			Attachments:  attachments,
+			Tags:         tags,
 		}
 		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)

@@ -3,7 +3,8 @@ package content
 import (
 	"project-root/internal/attachment"
 	"project-root/internal/comment"
-	"project-root/internal/tag"
+
+	// "project-root/internal/tag"
 
 	"time"
 
@@ -28,7 +29,8 @@ type Content struct {
 	MainFileType string                  `json:"main_file_type"`
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
-	Tags         []tag.Tag               `json:"tags" gorm:"many2many:content_tags;"`
+	Tags         []string                `json:"tags"`
+	// Tags         []tag.Tag       `json:"tags" gorm:"foreignKey:ContentID"`
 }
 
 // GetAllContents retrieves all contents from the database
