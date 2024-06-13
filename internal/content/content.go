@@ -29,7 +29,7 @@ type Content struct {
 	MainFileType string                  `json:"main_file_type"`
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
-	Tags         []string                `json:"tags"`
+	Tags         []string                `gorm:"type:text[]" json:"tags"`
 	// Tags         []tag.Tag       `json:"tags" gorm:"foreignKey:ContentID"`
 }
 
