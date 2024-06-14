@@ -16,11 +16,11 @@ import (
 
 // Content represents a content record in the database
 type Content struct {
-	ID           uint                    `gorm:"primary_key" json:"id"`
-	Title        string                  `json:"title"`
-	Description  string                  `json:"description"`
-	URL          string                  `json:"url"`
-	CategoryID   uint                    `json:"category_id"`
+	ID          uint   `gorm:"primary_key" json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	URL         string `json:"url"`
+	// CategoryID   uint                    `json:"category_id"`
 	AuthorID     uint                    `json:"author_id"`
 	AuthorName   string                  `json:"author_name"`
 	CreatedAt    time.Time               `gorm:"autoCreateTime" json:"created_at"`
@@ -34,9 +34,9 @@ type Content struct {
 	Categories   []category.Category     `gorm:"many2many:content_categories;" json:"categories"` // Define the many-to-many relationship
 	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
-	Tags         pq.StringArray          `gorm:"type:text[]"` // PostgreSQL array type for tags
-	// Tags         []string                `gorm:"type:text[]" json:"tags"`
-	// Tags         []tag.Tag       `json:"tags" gorm:"foreignKey:ContentID"`
+	Tags         pq.StringArray          `gorm:"type:text[]"`                      // PostgreSQL array type for tags
+	IsApproved   bool                    `gorm:"default:false" json:"is_approved"` // New field for approval status
+
 }
 
 // GetAllContents retrieves all contents from the database
