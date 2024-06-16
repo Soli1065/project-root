@@ -18,7 +18,11 @@ func GetAllCategoriesHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(categories)
+		// json.NewEncoder(w).Encode(categories)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(categories); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -37,7 +41,11 @@ func GetCategoryByIDHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		json.NewEncoder(w).Encode(category)
+		// json.NewEncoder(w).Encode(category)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(category); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -56,6 +64,7 @@ func CreateCategoryHandler(db *gorm.DB) http.HandlerFunc {
 		}
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(category)
+
 	}
 }
 
@@ -80,7 +89,11 @@ func UpdateCategoryHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(category)
+		// json.NewEncoder(w).Encode(category)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(category); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
