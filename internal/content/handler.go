@@ -360,37 +360,25 @@ func IncrementViewCountHandler(db *gorm.DB) http.HandlerFunc {
 // LikesCountHandler handles updating likes or dislikes for a specific content.
 func LikesCountHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Parse request parameters
-		params := mux.Vars(r)
-		contentID, err := strconv.Atoi(params["id"])
-		if err != nil {
-			http.Error(w, "Invalid content ID", http.StatusBadRequest)
+		// Parse request body
+		var requestBody struct {
+			ContentID int  `json:"content_id"`
+			Liked     bool `json:"liked"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Parse optional liked parameter
-		likedParam, ok := params["liked"]
-		var liked bool
-		if ok {
-			liked, err = strconv.ParseBool(likedParam)
-			if err != nil {
-				http.Error(w, "Invalid liked parameter", http.StatusBadRequest)
-				return
-			}
-		} else {
-			// Default to true if liked parameter is not provided
-			liked = true
-		}
-
-		// Update likes_count based on action
+		// Retrieve content from database
 		var content Content
-		result := db.First(&content, contentID)
-		if result.Error != nil {
+		if err := db.First(&content, requestBody.ContentID).Error; err != nil {
 			http.Error(w, "Content not found", http.StatusNotFound)
 			return
 		}
 
-		if liked {
+		// Update likes_count based on action
+		if requestBody.Liked {
 			// Increment likes
 			content.LikesCount++
 		} else {
