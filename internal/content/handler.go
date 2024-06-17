@@ -357,6 +357,54 @@ func IncrementViewCountHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// LikesCountHandler handles updating likes or dislikes for a specific content.
+func LikesCountHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse request parameters
+		params := mux.Vars(r)
+		contentID, err := strconv.Atoi(params["id"])
+		if err != nil {
+			http.Error(w, "Invalid content ID", http.StatusBadRequest)
+			return
+		}
+
+		// Determine action (like or dislike)
+		liked, err := strconv.ParseBool(params["liked"])
+		if err != nil {
+			http.Error(w, "Invalid liked parameter", http.StatusBadRequest)
+			return
+		}
+
+		// Update likes_count based on action
+		var content Content
+		result := db.First(&content, contentID)
+		if result.Error != nil {
+			http.Error(w, "Content not found", http.StatusNotFound)
+			return
+		}
+
+		if liked {
+			// Increment likes
+			content.LikesCount++
+		} else {
+			// Decrement likes
+			if content.LikesCount > 0 {
+				content.LikesCount--
+			}
+		}
+
+		// Save updated content back to database
+		if err := db.Save(&content).Error; err != nil {
+			http.Error(w, "Could not update likes count", http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with updated content
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(content)
+	}
+}
+
 // formatDuration converts a float64 duration in seconds to hh:mm:ss format
 func formatDuration(duration float64) string {
 	hours := int(duration / 3600)
@@ -620,6 +668,9 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			categories = append(categories, category)
 		}
 
+		//set initial likes_count
+		likesCount := 0
+
 		// Store content record in database
 		contentRecord := Content{
 			Title:        title,
@@ -637,6 +688,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			Tags:              tags,
 			Categories:        categories,
 			RelatedContentIDs: pqRelatedContentIDs,
+			LikesCount:        uint(likesCount),
 		}
 		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record:  "+err.Error(), http.StatusInternalServerError)

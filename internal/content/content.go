@@ -26,6 +26,7 @@ type Content struct {
 	CreatedAt         time.Time               `gorm:"autoCreateTime" json:"created_at"`
 	ImageURL          string                  `gorm:"type:varchar(255)" json:"image_url"`
 	ViewCount         uint                    `gorm:"default:0" json:"view_count"`
+	LikesCount        uint                    `gorm:"default:0" json:"likes_count"` // New field for likes count
 	Duration          string                  `json:"duration"`
 	IsLive            bool                    `gorm:"default:false" json:"is_live"`
 	MainFilePath      string                  `json:"main_file_path"`
