@@ -365,11 +365,12 @@ func formatDuration(duration float64) string {
 }
 
 type UploadResponse struct {
-	ID          uint                    `json:"id"`
-	ContentURL  string                  `json:"content_url"`
-	ImageURL    string                  `json:"image_url"`
-	Duration    string                  `json:"duration,omitempty"`
-	Attachments []attachment.Attachment `json:"attachments,omitempty"`
+	ID                uint                    `json:"id"`
+	ContentURL        string                  `json:"content_url"`
+	ImageURL          string                  `json:"image_url"`
+	Duration          string                  `json:"duration,omitempty"`
+	Attachments       []attachment.Attachment `json:"attachments,omitempty"`
+	RelatedContentIDs []uint                  `json:"related_content_ids"`
 }
 
 func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
@@ -399,7 +400,6 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		if relatedContentIDsStr != "" {
 			relatedContentIDStrs := strings.Split(relatedContentIDsStr, ",")
 
-			// Check if related_content_ids is empty or null
 			for _, idStr := range relatedContentIDStrs {
 				idStr = strings.TrimSpace(idStr) // Trim any surrounding whitespace
 				id, err := strconv.Atoi(idStr)
@@ -408,7 +408,6 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 					return
 				}
 				relatedContentIDs = append(relatedContentIDs, uint(id))
-
 			}
 		}
 
@@ -642,11 +641,12 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 
 		// Respond with the content details
 		response := UploadResponse{
-			ID:          contentRecord.ID,
-			ContentURL:  mainFileURL,
-			ImageURL:    imageURL,
-			Duration:    duration,
-			Attachments: attachments,
+			ID:                contentRecord.ID,
+			ContentURL:        mainFileURL,
+			ImageURL:          imageURL,
+			Duration:          duration,
+			Attachments:       attachments,
+			RelatedContentIDs: relatedContentIDs,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
