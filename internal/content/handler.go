@@ -158,6 +158,7 @@ func UpdateContentHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(content)
 	}
 }
@@ -195,10 +196,11 @@ type VideoUploadResponse struct {
 	Duration string `json:"duration"`
 }
 
+// not using
 func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Set a maximum upload size of 100 MB
-		r.Body = http.MaxBytesReader(w, r.Body, 100<<20) // 100MB
+		// Set a maximum upload size of 500 MB
+		r.Body = http.MaxBytesReader(w, r.Body, 500<<20) // 500MB
 
 		// Parse form values
 		title := r.FormValue("title")
@@ -224,8 +226,8 @@ func UploadVideoHandler(db *gorm.DB) http.HandlerFunc {
 		defer file.Close()
 
 		// Check file size
-		if handler.Size > 100<<20 { // 100MB
-			http.Error(w, "File size exceeds 100MB limit", http.StatusBadRequest)
+		if handler.Size > 500<<20 { // 500MB
+			http.Error(w, "File size exceeds 500MB limit", http.StatusBadRequest)
 			return
 		}
 
@@ -372,8 +374,8 @@ type UploadResponse struct {
 
 func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Set a maximum upload size of 100 MB
-		r.Body = http.MaxBytesReader(w, r.Body, 100<<20) // 100MB
+		// Set a maximum upload size of 500 MB
+		r.Body = http.MaxBytesReader(w, r.Body, 500<<20) // 500MB
 
 		// Parse form values
 		title := r.FormValue("title")
@@ -390,6 +392,20 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		}
 		AuthorName := r.FormValue("author_name")
 
+		// Parse related content IDs
+		relatedContentIDsStr := r.FormValue("related_content_ids")
+		var relatedContentIDs []uint
+		if relatedContentIDsStr != "" {
+			for _, idStr := range strings.Split(relatedContentIDsStr, ",") {
+				id, err := strconv.Atoi(strings.TrimSpace(idStr))
+				if err != nil {
+					http.Error(w, "Invalid related content ID", http.StatusBadRequest)
+					return
+				}
+				relatedContentIDs = append(relatedContentIDs, uint(id))
+			}
+		}
+
 		// Handle primary content file upload
 		mainFile, mainFileHeader, err := r.FormFile("main_file")
 		if err != nil {
@@ -399,7 +415,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		defer mainFile.Close()
 
 		// Check main file size
-		if mainFileHeader.Size > 100<<20 { // 100MB
+		if mainFileHeader.Size > 500<<20 { // 500MB
 			http.Error(w, "File size exceeds 100MB limit", http.StatusBadRequest)
 			return
 		}
@@ -607,10 +623,11 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			ImageURL:     imageURL,
 			Duration:     duration,
 			// CategoryID:   uint(categoryID),
-			CreatedAt:   time.Now(),
-			Attachments: attachments,
-			Tags:        tags,
-			Categories:  categories,
+			CreatedAt:         time.Now(),
+			Attachments:       attachments,
+			Tags:              tags,
+			Categories:        categories,
+			RelatedContentIDs: relatedContentIDs,
 		}
 		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record", http.StatusInternalServerError)

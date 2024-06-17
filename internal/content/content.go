@@ -21,21 +21,22 @@ type Content struct {
 	Description string `json:"description"`
 	URL         string `json:"url"`
 	// CategoryID   uint                    `json:"category_id"`
-	AuthorID     uint                    `json:"author_id"`
-	AuthorName   string                  `json:"author_name"`
-	CreatedAt    time.Time               `gorm:"autoCreateTime" json:"created_at"`
-	ImageURL     string                  `gorm:"type:varchar(255)" json:"image_url"`
-	ViewCount    uint                    `gorm:"default:0" json:"view_count"`
-	Duration     string                  `json:"duration"`
-	IsLive       bool                    `gorm:"default:false" json:"is_live"`
-	MainFilePath string                  `json:"main_file_path"`
-	MainFileType string                  `json:"main_file_type"`
-	CategoryIDs  []uint                  `gorm:"-" json:"category_ids"`                           // Ignored by GORM, used for handling IDs from request
-	Categories   []category.Category     `gorm:"many2many:content_categories;" json:"categories"` // Define the many-to-many relationship
-	Attachments  []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
-	Comments     []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
-	Tags         pq.StringArray          `gorm:"type:text[]"`                      // PostgreSQL array type for tags
-	IsApproved   bool                    `gorm:"default:false" json:"is_approved"` // New field for approval status
+	AuthorID          uint                    `json:"author_id"`
+	AuthorName        string                  `json:"author_name"`
+	CreatedAt         time.Time               `gorm:"autoCreateTime" json:"created_at"`
+	ImageURL          string                  `gorm:"type:varchar(255)" json:"image_url"`
+	ViewCount         uint                    `gorm:"default:0" json:"view_count"`
+	Duration          string                  `json:"duration"`
+	IsLive            bool                    `gorm:"default:false" json:"is_live"`
+	MainFilePath      string                  `json:"main_file_path"`
+	MainFileType      string                  `json:"main_file_type"`
+	CategoryIDs       []uint                  `gorm:"-" json:"category_ids"`                           // Ignored by GORM, used for handling IDs from request
+	Categories        []category.Category     `gorm:"many2many:content_categories;" json:"categories"` // Define the many-to-many relationship
+	Attachments       []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
+	Comments          []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
+	Tags              pq.StringArray          `gorm:"type:text[]"`                      // PostgreSQL array type for tags
+	IsApproved        bool                    `gorm:"default:false" json:"is_approved"` // New field for approval status
+	RelatedContentIDs []uint                  `json:"related_content_ids"`              // New field for related content IDs
 
 }
 
