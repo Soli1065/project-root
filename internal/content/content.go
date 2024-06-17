@@ -36,7 +36,7 @@ type Content struct {
 	Comments          []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
 	Tags              pq.StringArray          `gorm:"type:text[]"`                               // PostgreSQL array type for tags
 	IsApproved        bool                    `gorm:"default:false" json:"is_approved"`          // New field for approval status
-	RelatedContentIDs []uint                  `json:"related_content_ids" gorm:"type:integer[]"` // Ensure type matches PostgreSQL array type
+	RelatedContentIDs pq.Int64Array           `gorm:"type:integer[]" json:"related_content_ids"` // Use pq.Int64Array for PostgreSQL integer arrays
 
 }
 

@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 
 	"fmt"
@@ -32,7 +33,7 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 		var contents []Content
 
 		// Fetch all contents with attachments and categories preloaded
-		if err := db.Preload("Attachments").Preload("Categories").Preload("RelatedContentIDs").Find(&contents).Error; err != nil {
+		if err := db.Preload("Attachments").Preload("Categories").Find(&contents).Error; err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -394,20 +395,25 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		AuthorName := r.FormValue("author_name")
 
 		// Parse related content IDs from form-data
-		// relatedContentIDsStr := r.FormValue("related_content_ids")
-		// var relatedContentIDs []uint
+		relatedContentIDsStr := r.FormValue("related_content_ids")
+		var relatedContentIDs []uint
 
-		// relatedContentIDStrs := strings.Split(relatedContentIDsStr, ",")
+		relatedContentIDStrs := strings.Split(relatedContentIDsStr, ",")
 
-		// for _, idStr := range relatedContentIDStrs {
-		// 	idStr = strings.TrimSpace(idStr) // Trim any surrounding whitespace
-		// 	id, err := strconv.Atoi(idStr)
-		// 	if err != nil {
-		// 		http.Error(w, "Invalid related content ID", http.StatusBadRequest)
-		// 		return
-		// 	}
-		// 	relatedContentIDs = append(relatedContentIDs, uint(id))
-		// }
+		for _, idStr := range relatedContentIDStrs {
+			idStr = strings.TrimSpace(idStr) // Trim any surrounding whitespace
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				http.Error(w, "Invalid related content ID", http.StatusBadRequest)
+				return
+			}
+			relatedContentIDs = append(relatedContentIDs, uint(id))
+		}
+		// Convert []uint to pq.Int64Array
+		var pqRelatedContentIDs pq.Int64Array
+		for _, id := range relatedContentIDs {
+			pqRelatedContentIDs = append(pqRelatedContentIDs, int64(id))
+		}
 
 		// Handle primary content file upload
 		mainFile, mainFileHeader, err := r.FormFile("main_file")
@@ -614,8 +620,6 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			categories = append(categories, category)
 		}
 
-		relatedContentIDs := []uint{42, 41}
-
 		// Store content record in database
 		contentRecord := Content{
 			Title:        title,
@@ -632,7 +636,7 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 			Attachments:       attachments,
 			Tags:              tags,
 			Categories:        categories,
-			RelatedContentIDs: relatedContentIDs,
+			RelatedContentIDs: pqRelatedContentIDs,
 		}
 		if err := db.Create(&contentRecord).Error; err != nil {
 			http.Error(w, "Could not save content record:  "+err.Error(), http.StatusInternalServerError)
