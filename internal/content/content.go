@@ -36,7 +36,7 @@ type Content struct {
 	Comments          []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
 	Tags              pq.StringArray          `gorm:"type:text[]"`                      // PostgreSQL array type for tags
 	IsApproved        bool                    `gorm:"default:false" json:"is_approved"` // New field for approval status
-	RelatedContentIDs []uint                  `json:"related_content_ids"`              // New field for related content IDs
+	RelatedContentIDs []uint                  `gorm:"-" json:"related_content_ids"`     // New field for related content IDs
 
 }
 
