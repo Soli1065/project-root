@@ -32,7 +32,7 @@ func GetAllContentsHandler(db *gorm.DB) http.HandlerFunc {
 		var contents []Content
 
 		// Fetch all contents with attachments and categories preloaded
-		if err := db.Preload("Attachments").Preload("Categories").Find(&contents).Error; err != nil {
+		if err := db.Preload("Attachments").Preload("Categories").Preload("RelatedContentIDs").Find(&contents).Error; err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

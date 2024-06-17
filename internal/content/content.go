@@ -34,9 +34,9 @@ type Content struct {
 	Categories        []category.Category     `gorm:"many2many:content_categories;" json:"categories"` // Define the many-to-many relationship
 	Attachments       []attachment.Attachment `json:"attachments" gorm:"foreignKey:ContentID"`
 	Comments          []comment.Comment       `json:"comments" gorm:"foreignKey:ContentID"`
-	Tags              pq.StringArray          `gorm:"type:text[]"`                      // PostgreSQL array type for tags
-	IsApproved        bool                    `gorm:"default:false" json:"is_approved"` // New field for approval status
-	RelatedContentIDs []uint                  `gorm:"-" json:"related_content_ids"`     // New field for related content IDs
+	Tags              pq.StringArray          `gorm:"type:text[]"`                               // PostgreSQL array type for tags
+	IsApproved        bool                    `gorm:"default:false" json:"is_approved"`          // New field for approval status
+	RelatedContentIDs []uint                  `gorm:"type:integer[]" json:"related_content_ids"` // New field for related content IDs
 
 }
 
