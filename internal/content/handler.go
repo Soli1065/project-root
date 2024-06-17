@@ -368,11 +368,18 @@ func LikesCountHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		// Determine action (like or dislike)
-		liked, err := strconv.ParseBool(params["liked"])
-		if err != nil {
-			http.Error(w, "Invalid liked parameter", http.StatusBadRequest)
-			return
+		// Parse optional liked parameter
+		likedParam, ok := params["liked"]
+		var liked bool
+		if ok {
+			liked, err = strconv.ParseBool(likedParam)
+			if err != nil {
+				http.Error(w, "Invalid liked parameter", http.StatusBadRequest)
+				return
+			}
+		} else {
+			// Default to true if liked parameter is not provided
+			liked = true
 		}
 
 		// Update likes_count based on action
@@ -387,7 +394,7 @@ func LikesCountHandler(db *gorm.DB) http.HandlerFunc {
 			// Increment likes
 			content.LikesCount++
 		} else {
-			// Decrement likes
+			// Decrement likes (if greater than 0)
 			if content.LikesCount > 0 {
 				content.LikesCount--
 			}
