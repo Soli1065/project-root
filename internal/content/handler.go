@@ -392,11 +392,19 @@ func UploadContentHandler(db *gorm.DB) http.HandlerFunc {
 		}
 		AuthorName := r.FormValue("author_name")
 
-		// Parse related content IDs from request body
+		// Parse related content IDs from form-data
+		relatedContentIDsStr := r.FormValue("related_content_ids")
+		relatedContentIDsStrs := strings.Split(relatedContentIDsStr, ",")
+
+		// Convert string IDs to uint
 		var relatedContentIDs []uint
-		if err := json.NewDecoder(r.Body).Decode(&relatedContentIDs); err != nil {
-			http.Error(w, "Invalid related content IDs", http.StatusBadRequest)
-			return
+		for _, idStr := range relatedContentIDsStrs {
+			id, err := strconv.ParseUint(idStr, 10, 32)
+			if err != nil {
+				http.Error(w, "Invalid related content IDs", http.StatusBadRequest)
+				return
+			}
+			relatedContentIDs = append(relatedContentIDs, uint(id))
 		}
 
 		// Handle primary content file upload
