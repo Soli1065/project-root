@@ -73,6 +73,10 @@ func Initialize() {
 		log.Fatalf("Failed to migrate attachment model: %v", err)
 	}
 
+	if err := DB.AutoMigrate(&attachment.Attachment{}); err != nil {
+		log.Fatalf("Failed to migrate attachment model: %v", err)
+	}
+
 	// if err := DB.AutoMigrate(&comment.Comment{}); err != nil {
 	// 	log.Fatalf("Failed to migrate attachment model: %v", err)
 	// }
